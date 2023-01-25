@@ -32,7 +32,7 @@ func calculateTileName(sample string) TileType {
 	return None
 }
 
-func NewTileRules(sampleInput [][]string, tile string, i int, j int) TileRules {
+func newTileRules(sampleInput [][]string, tile string, i int, j int) TileRules {
 	row := sampleInput[i]
 	tileRules := TileRules{Type: calculateTileName(tile)}
 	if i+1 < len(sampleInput) {
@@ -64,7 +64,7 @@ func WaveFunction(sampleInput [][]string) []TileRules {
 	tileRulesList := []TileRules{}
 	for i, row := range sampleInput {
 		for j, tile := range row {
-			tileRulesList = append(tileRulesList, NewTileRules(sampleInput, tile, i, j))
+			tileRulesList = append(tileRulesList, newTileRules(sampleInput, tile, i, j))
 		}
 	}
 	return tileRulesList
@@ -107,4 +107,26 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 	if tileRuleSix.Type != "SEA" || tileRuleSix.Down != "LAND" || tileRuleSix.Up != "SEA" || tileRuleSix.Right != "" || tileRuleSix.Left != "COAST" {
 		t.Errorf("Tile rule 6 invalid %+v", tileRuleSix)
 	}
+}
+
+func collapse(ruleSet []TileRules) [][]string {
+	return [][]string{{""}}
+}
+
+// Given a set of rules
+// Collapses a square into a tile following those rules
+func TestWaveFunctionCollapseSingleSquare(t *testing.T) {
+	ruleOne := TileRules{Type: Land, Up: Land, Down: Sea, Right: Coast, Left: Sea}
+	ruleSet := []TileRules{ruleOne}
+
+	result := collapse(ruleSet)
+	if result[0][0] != "L" {
+		t.Errorf("Square did not collapse into L but %s instead", result[0][0])
+	}
+	/*
+		[
+			[L, C, S],
+			[S, C, L]
+		]
+	*/
 }
