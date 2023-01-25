@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+)
 
 type TileType = string
 
@@ -109,8 +112,19 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 	}
 }
 
-func collapse(ruleSet []TileRules) [][]string {
-	return [][]string{{""}}
+func collapse(ruleSet []TileRules) [1][1]string {
+	grid := [1][1]string{}
+	for i := 0; i < len(grid); i++ {
+		for j := 0; j < len(grid[0]); j++ {
+			randomNumber := rand.Intn(len(ruleSet))
+			if randomNumber > len(ruleSet) {
+				randomNumber -= 1
+			}
+			grid[i][j] = ruleSet[randomNumber].Type
+		}
+	}
+
+	return grid
 }
 
 // Given a set of rules
@@ -120,8 +134,8 @@ func TestWaveFunctionCollapseSingleSquare(t *testing.T) {
 	ruleSet := []TileRules{ruleOne}
 
 	result := collapse(ruleSet)
-	if result[0][0] != "L" {
-		t.Errorf("Square did not collapse into L but %s instead", result[0][0])
+	if result[0][0] != "LAND" {
+		t.Errorf("Square did not collapse into LAND but %s instead", result[0][0])
 	}
 	/*
 		[
