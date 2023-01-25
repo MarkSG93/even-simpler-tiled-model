@@ -113,15 +113,27 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 
 type NumberGenerator func() int
 
-func collapse(ruleSet []TileRules, numberGenerator NumberGenerator) [1][1]string {
-	grid := [1][1]string{}
+func collapse(ruleSet []TileRules, numberGenerator NumberGenerator) [1][2]string {
+	tileTypes := []TileType{Land, Sea, Coast}
+	grid := [1][2]string{}
 	for i := 0; i < len(grid); i++ {
 		for j := 0; j < len(grid[0]); j++ {
 			randomNumber := numberGenerator()
-			if randomNumber > len(ruleSet) {
-				randomNumber -= 1
+			tileType := tileTypes[randomNumber]
+
+			rule := ruleSet[0]
+			for {
+				if j == 0 {
+					break
+				}
+				previousTile := grid[i][j-1]
+				if rule.Type == previousTile && tileType == rule.Right {
+					break
+				}
+				randomNumber++
+				tileType = tileTypes[randomNumber]
 			}
-			grid[i][j] = ruleSet[randomNumber].Type
+			grid[i][j] = tileType
 		}
 	}
 
@@ -141,6 +153,31 @@ func TestWaveFunctionCollapseSingleSquare(t *testing.T) {
 	result := collapse(ruleSet, numberGenerator)
 	if result[0][0] != "LAND" {
 		t.Errorf("Square did not collapse into LAND but %s instead", result[0][0])
+	}
+	/*
+		[
+			[L, C, S],
+			[S, C, L]
+		]
+	*/
+}
+
+func TestWaveFunctionCollapseMultipleSquares(t *testing.T) {
+	ruleOne := TileRules{Type: Land, Up: Land, Down: Sea, Right: Coast, Left: Sea}
+	ruleSet := []TileRules{ruleOne}
+
+	numberGenerator := func() int {
+		return 0
+	}
+
+	result := collapse(ruleSet, numberGenerator)
+	if result[0][0] != Land {
+		t.Errorf("Square did not collapse into LAND but %s instead", result[0][0])
+	}
+
+	nextTileType := result[0][1]
+	if nextTileType != Coast {
+		t.Errorf("Next tile should be COAST but got %s", nextTileType)
 	}
 	/*
 		[
