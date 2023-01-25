@@ -14,14 +14,15 @@ const (
 	Land  TileType = "LAND"
 	Sea   TileType = "SEA"
 	Coast TileType = "COAST"
+	None           = ""
 )
 
-type Tile struct {
+type TileRules struct {
 	Type  TileType
-	Left  Rule
-	Right Rule
-	Up    Rule
-	Down  Rule
+	Left  TileType
+	Right TileType
+	Up    TileType
+	Down  TileType
 }
 
 type Rules = []Rule
@@ -29,11 +30,11 @@ type Rules = []Rule
 func calculateTileName(sample string) string {
 	switch sample {
 	case "C":
-		return "COAST"
+		return Coast
 	case "L":
-		return "LAND"
+		return Land
 	case "S":
-		return "SEA"
+		return Sea
 	}
 
 	return ""
@@ -43,82 +44,83 @@ func generateLeftMostTile(currentTile string, nextTile string) Rule {
 	return Rule{TileOne: calculateTileName(currentTile), TileTwo: calculateTileName(nextTile), Orientation: "LEFT"}
 }
 
-func waveFunction(sampleInput [][]string) Rules {
+func waveFunction(sampleInput [][]string) (Rules, []TileRules) {
 	rules := Rules{}
-	for _, row := range sampleInput {
+	tileRulesList := []TileRules{}
+	for i, row := range sampleInput {
 		for j, tile := range row {
+			tileRules := TileRules{Type: calculateTileName(tile)}
+			if i+1 < len(sampleInput) {
+				tileRules.Down = calculateTileName(sampleInput[i+1][j])
+			}
+
+			if i > 0 {
+				tileRules.Up = calculateTileName(sampleInput[i-1][j])
+			}
+
 			if j == 0 {
 				rules = append(rules, generateLeftMostTile(tile, row[j+1]))
+				tileRules.Right = calculateTileName(row[j+1])
+				tileRules.Left = ""
+				tileRulesList = append(tileRulesList, tileRules)
 				continue
 			}
 
 			rule := Rule{}
 			if j+1 >= len(row) { // on the right most tile
 				rule = Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j-1]), Orientation: "LEFT"}
-			} else {
+				tileRules.Right = ""
+				tileRules.Left = calculateTileName(row[j-1])
+			} else { // middle tiles
 				rule = Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j+1]), Orientation: "RIGHT"}
 				rules = append(rules, Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j-1]), Orientation: "LEFT"})
+
+				tileRules.Left = calculateTileName(row[j-1])
+				tileRules.Right = calculateTileName(row[j+1])
 			}
+
+			tileRulesList = append(tileRulesList, tileRules)
 			rules = append(rules, rule)
 		}
 	}
-	return rules
+	return rules, tileRulesList
 }
 
 func TestGenerateRulesFromSampleInput(t *testing.T) {
 	sampleInput := [][]string{
 		{"L", "C", "S"},
-	}
-	rules := waveFunction(sampleInput)
-
-	if rules[0].TileOne != "LAND" && rules[0].TileTwo != "COAST" && rules[0].Orientation != "LEFT" {
-		t.Errorf("Rule 1 is fucked")
-	}
-
-	if rules[1].TileOne != "COAST" && rules[1].TileTwo != "LAND" && rules[1].Orientation != "RIGHT" {
-		t.Errorf("Rule 2 is fucked")
-	}
-
-	if rules[2].TileOne != "COAST" && rules[2].TileTwo != "SEA" && rules[2].Orientation != "LEFT" {
-		t.Errorf("Rule 3 is fucked")
-	}
-
-	if rules[3].TileOne != "SEA" && rules[3].TileTwo != "COAST" && rules[3].Orientation != "RIGHT" {
-		t.Errorf("Rule 4 is fucked")
-	}
-}
-
-func TestGenerateRulesFromMultipleRowSampleInput(t *testing.T) {
-	sampleInput := [][]string{
-		{"L", "C"},
-		{"C", "S"},
-	}
-	rules := waveFunction(sampleInput)
-	if rules[2].TileOne != "COAST" && rules[2].TileTwo != "SEA" && rules[2].Orientation != "LEFT" {
-		t.Errorf("The rule for the 1st item in the 2nd row is totally fucked")
-	}
-
-	if rules[3].TileOne != "SEA" && rules[3].TileTwo != "COAST" && rules[3].Orientation != "RIGHT" {
-		t.Errorf("The rule for the 2nd item in the 2nd row is totally fucked")
-	}
-
-}
-
-func TestConvertSampleToTileValues(t *testing.T) {
-	sampleInput := [][]string{
+		{"L", "C", "S"},
 		{"C", "S", "L"},
 	}
-	rules := waveFunction(sampleInput)
-	if rules[0].TileOne != "COAST" {
-		t.Errorf("Tile one did not match COAST")
+	_, tileRulesList := waveFunction(sampleInput)
+
+	tileRuleOne := tileRulesList[0]
+	if tileRuleOne.Type != "LAND" || tileRuleOne.Down != "LAND" || tileRuleOne.Up != "" || tileRuleOne.Right != "COAST" || tileRuleOne.Left != "" {
+		t.Errorf("Tile rule 1 invalid %+v", tileRuleOne)
 	}
-	if rules[0].TileTwo != "SEA" {
-		t.Errorf("Tile two did not match SEA")
+
+	tileRuleTwo := tileRulesList[1]
+	if tileRuleTwo.Type != "COAST" || tileRuleTwo.Down != "COAST" || tileRuleTwo.Up != "" || tileRuleTwo.Right != "SEA" || tileRuleTwo.Left != "LAND" {
+		t.Errorf("Tile rule 2 invalid %+v", tileRuleTwo)
 	}
-	if rules[1].TileTwo != "LAND" {
-		t.Errorf("Tile 3 did not match LAND but %s", rules[2].TileOne)
+
+	tileRuleThree := tileRulesList[2]
+	if tileRuleThree.Type != "SEA" || tileRuleThree.Down != "SEA" || tileRuleThree.Up != "" || tileRuleThree.Right != "" || tileRuleThree.Left != "COAST" {
+		t.Errorf("Tile rule 3 invalid %+v", tileRuleThree)
 	}
-	if rules[2].TileOne != "LAND" {
-		t.Errorf("Rule 3 Tile 1 did not match LAND but %s", rules[2].TileOne)
+
+	tileRuleFour := tileRulesList[3]
+	if tileRuleFour.Type != "LAND" || tileRuleFour.Down != "COAST" || tileRuleFour.Up != "LAND" || tileRuleFour.Right != "COAST" || tileRuleFour.Left != "" {
+		t.Errorf("Tile rule 4 invalid %+v", tileRuleFour)
+	}
+
+	tileRuleFive := tileRulesList[4]
+	if tileRuleFive.Type != "COAST" || tileRuleFive.Down != "SEA" || tileRuleFive.Up != "COAST" || tileRuleFive.Right != "SEA" || tileRuleFive.Left != "LAND" {
+		t.Errorf("Tile rule 5 invalid %+v", tileRuleFive)
+	}
+
+	tileRuleSix := tileRulesList[5]
+	if tileRuleSix.Type != "SEA" || tileRuleSix.Down != "LAND" || tileRuleSix.Up != "SEA" || tileRuleSix.Right != "" || tileRuleSix.Left != "COAST" {
+		t.Errorf("Tile rule 6 invalid %+v", tileRuleSix)
 	}
 }
