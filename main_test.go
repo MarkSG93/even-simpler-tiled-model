@@ -2,12 +2,6 @@ package main
 
 import "testing"
 
-type Rule struct {
-	TileOne     string
-	TileTwo     string
-	Orientation string
-}
-
 type TileType = string
 
 const (
@@ -25,9 +19,7 @@ type TileRules struct {
 	Down  TileType
 }
 
-type Rules = []Rule
-
-func calculateTileName(sample string) string {
+func calculateTileName(sample string) TileType {
 	switch sample {
 	case "C":
 		return Coast
@@ -37,53 +29,45 @@ func calculateTileName(sample string) string {
 		return Sea
 	}
 
-	return ""
+	return None
 }
 
-func generateLeftMostTile(currentTile string, nextTile string) Rule {
-	return Rule{TileOne: calculateTileName(currentTile), TileTwo: calculateTileName(nextTile), Orientation: "LEFT"}
+func NewTileRules(sampleInput [][]string, tile string, i int, j int) TileRules {
+	row := sampleInput[i]
+	tileRules := TileRules{Type: calculateTileName(tile)}
+	if i+1 < len(sampleInput) {
+		tileRules.Down = calculateTileName(sampleInput[i+1][j])
+	}
+
+	if i > 0 {
+		tileRules.Up = calculateTileName(sampleInput[i-1][j])
+	}
+
+	if j == 0 {
+		tileRules.Right = calculateTileName(row[j+1])
+		tileRules.Left = ""
+		return tileRules
+	}
+
+	if j+1 >= len(row) { // on the right most tile
+		tileRules.Right = ""
+		tileRules.Left = calculateTileName(row[j-1])
+	} else { // middle tiles
+		tileRules.Left = calculateTileName(row[j-1])
+		tileRules.Right = calculateTileName(row[j+1])
+	}
+
+	return tileRules
 }
 
-func waveFunction(sampleInput [][]string) (Rules, []TileRules) {
-	rules := Rules{}
+func WaveFunction(sampleInput [][]string) []TileRules {
 	tileRulesList := []TileRules{}
 	for i, row := range sampleInput {
 		for j, tile := range row {
-			tileRules := TileRules{Type: calculateTileName(tile)}
-			if i+1 < len(sampleInput) {
-				tileRules.Down = calculateTileName(sampleInput[i+1][j])
-			}
-
-			if i > 0 {
-				tileRules.Up = calculateTileName(sampleInput[i-1][j])
-			}
-
-			if j == 0 {
-				rules = append(rules, generateLeftMostTile(tile, row[j+1]))
-				tileRules.Right = calculateTileName(row[j+1])
-				tileRules.Left = ""
-				tileRulesList = append(tileRulesList, tileRules)
-				continue
-			}
-
-			rule := Rule{}
-			if j+1 >= len(row) { // on the right most tile
-				rule = Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j-1]), Orientation: "LEFT"}
-				tileRules.Right = ""
-				tileRules.Left = calculateTileName(row[j-1])
-			} else { // middle tiles
-				rule = Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j+1]), Orientation: "RIGHT"}
-				rules = append(rules, Rule{TileOne: calculateTileName(tile), TileTwo: calculateTileName(row[j-1]), Orientation: "LEFT"})
-
-				tileRules.Left = calculateTileName(row[j-1])
-				tileRules.Right = calculateTileName(row[j+1])
-			}
-
-			tileRulesList = append(tileRulesList, tileRules)
-			rules = append(rules, rule)
+			tileRulesList = append(tileRulesList, NewTileRules(sampleInput, tile, i, j))
 		}
 	}
-	return rules, tileRulesList
+	return tileRulesList
 }
 
 func TestGenerateRulesFromSampleInput(t *testing.T) {
@@ -92,7 +76,7 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 		{"L", "C", "S"},
 		{"C", "S", "L"},
 	}
-	_, tileRulesList := waveFunction(sampleInput)
+	tileRulesList := WaveFunction(sampleInput)
 
 	tileRuleOne := tileRulesList[0]
 	if tileRuleOne.Type != "LAND" || tileRuleOne.Down != "LAND" || tileRuleOne.Up != "" || tileRuleOne.Right != "COAST" || tileRuleOne.Left != "" {
