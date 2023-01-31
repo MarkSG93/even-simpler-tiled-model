@@ -79,6 +79,10 @@ func sliceIncludes(slice []TileType, needle TileType) bool {
 	return false
 }
 
+func shouldAddRule(entries []TileType, newTile TileType) bool {
+	return newTile != None && !sliceIncludes(entries, newTile)
+}
+
 func WaveFunction(sampleInput [][]string) map[TileType]TileRulesList {
 	tileRulesMap := make(map[TileType]TileRulesList)
 	defaultTileRule := TileRulesList{Up: []TileType{}, Down: []TileType{}, Left: []TileType{}, Right: []TileType{}}
@@ -96,16 +100,16 @@ func WaveFunction(sampleInput [][]string) map[TileType]TileRulesList {
 				continue
 			}
 
-			if newRule.Up != None && !sliceIncludes(entry.Up, newRule.Up) {
+			if shouldAddRule(entry.Up, newRule.Up) {
 				entry.Up = append(entry.Down, newRule.Up)
 			}
-			if newRule.Down != None && !sliceIncludes(entry.Down, newRule.Down) {
+			if shouldAddRule(entry.Down, newRule.Down) {
 				entry.Down = append(entry.Down, newRule.Down)
 			}
-			if newRule.Left != None && !sliceIncludes(entry.Left, newRule.Left) {
+			if shouldAddRule(entry.Left, newRule.Left) {
 				entry.Left = append(entry.Left, newRule.Left)
 			}
-			if newRule.Right != None && !sliceIncludes(entry.Right, newRule.Right) {
+			if shouldAddRule(entry.Right, newRule.Right) {
 				entry.Right = append(entry.Right, newRule.Right)
 			}
 			tileRulesMap[tileName] = entry
