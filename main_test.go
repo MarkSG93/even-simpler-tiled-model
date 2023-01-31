@@ -21,6 +21,13 @@ type TileRules struct {
 	Down  TileType
 }
 
+type TileRulesList struct {
+	Left  []TileType
+	Right []TileType
+	Up    []TileType
+	Down  []TileType
+}
+
 func calculateTileName(sample string) TileType {
 	switch sample {
 	case "C":
@@ -62,14 +69,46 @@ func newTileRules(sampleInput [][]string, tile string, i int, j int) TileRules {
 	return tileRules
 }
 
-func WaveFunction(sampleInput [][]string) []TileRules {
-	tileRulesList := []TileRules{}
-	for i, row := range sampleInput {
-		for j, tile := range row {
-			tileRulesList = append(tileRulesList, newTileRules(sampleInput, tile, i, j))
+func sliceIncludes(slice []TileType, needle TileType) bool {
+	for _, tileType := range slice {
+		if tileType == needle {
+			return true
 		}
 	}
-	return tileRulesList
+
+	return false
+}
+
+func WaveFunction(sampleInput [][]string) map[TileType]TileRulesList {
+	tileRulesMap := make(map[TileType]TileRulesList)
+	defaultTileRule := TileRulesList{Up: []TileType{}, Down: []TileType{}, Left: []TileType{}, Right: []TileType{}}
+	tileRulesMap[Land] = defaultTileRule
+	tileRulesMap[Sea] = defaultTileRule
+	tileRulesMap[Coast] = defaultTileRule
+
+	for i, row := range sampleInput {
+		for j, tile := range row {
+			tileName := calculateTileName(tile)
+			newRule := newTileRules(sampleInput, tile, i, j)
+
+			if entry, ok := tileRulesMap[tileName]; ok {
+				if newRule.Up != None && !sliceIncludes(entry.Up, newRule.Up) {
+					entry.Up = append(entry.Down, newRule.Up)
+				}
+				if newRule.Down != None && !sliceIncludes(entry.Down, newRule.Down) {
+					entry.Down = append(entry.Down, newRule.Down)
+				}
+				if newRule.Left != None && !sliceIncludes(entry.Left, newRule.Left) {
+					entry.Left = append(entry.Left, newRule.Left)
+				}
+				if newRule.Right != None && !sliceIncludes(entry.Right, newRule.Right) {
+					entry.Right = append(entry.Right, newRule.Right)
+				}
+				tileRulesMap[tileName] = entry
+			}
+		}
+	}
+	return tileRulesMap
 }
 
 func TestGenerateRulesFromSampleInput(t *testing.T) {
@@ -78,36 +117,48 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 		{"L", "C", "S"},
 		{"C", "S", "L"},
 	}
-	tileRulesList := WaveFunction(sampleInput)
+	tileRulesMap := WaveFunction(sampleInput)
 
-	tileRuleOne := tileRulesList[0]
-	if tileRuleOne.Type != "LAND" || tileRuleOne.Down != "LAND" || tileRuleOne.Up != "" || tileRuleOne.Right != "COAST" || tileRuleOne.Left != "" {
-		t.Errorf("Tile rule 1 invalid %+v", tileRuleOne)
+	landRules := tileRulesMap[Land]
+	if !sliceIncludes(landRules.Down, Land) || !sliceIncludes(landRules.Down, Coast) {
+		t.Errorf("Land rules for Down isn't Land and Coast. Got %+v.", landRules.Down)
+	}
+	if !sliceIncludes(landRules.Up, Land) || !sliceIncludes(landRules.Up, Sea) {
+		t.Errorf("Land rules for up isn't Land and Sea. Got %+v.", landRules.Down)
+	}
+	if !sliceIncludes(landRules.Right, Coast) {
+		t.Errorf("Land rules for Right isn't Coast. Got %+v.", landRules.Down)
+	}
+	if !sliceIncludes(landRules.Left, Sea) {
+		t.Errorf("Land rules for Left isn't Sea. Got %+v.", landRules.Down)
 	}
 
-	tileRuleTwo := tileRulesList[1]
-	if tileRuleTwo.Type != "COAST" || tileRuleTwo.Down != "COAST" || tileRuleTwo.Up != "" || tileRuleTwo.Right != "SEA" || tileRuleTwo.Left != "LAND" {
-		t.Errorf("Tile rule 2 invalid %+v", tileRuleTwo)
+	seaRules := tileRulesMap[Sea]
+	if !sliceIncludes(seaRules.Down, Sea) {
+		t.Errorf("Sea rules for Down isn't Sea. Got %+v.", seaRules.Down)
+	}
+	if !sliceIncludes(seaRules.Up, Coast) || !sliceIncludes(seaRules.Up, Sea) {
+		t.Errorf("Sea rules for up isn't Coast and Sea. Got %+v.", seaRules.Up)
+	}
+	if !sliceIncludes(seaRules.Right, Land) {
+		t.Errorf("Sea rules for Right isn't Land. Got %+v.", seaRules.Right)
+	}
+	if !sliceIncludes(seaRules.Left, Coast) {
+		t.Errorf("Sea rules for Left isn't Coast. Got %+v.", seaRules.Left)
 	}
 
-	tileRuleThree := tileRulesList[2]
-	if tileRuleThree.Type != "SEA" || tileRuleThree.Down != "SEA" || tileRuleThree.Up != "" || tileRuleThree.Right != "" || tileRuleThree.Left != "COAST" {
-		t.Errorf("Tile rule 3 invalid %+v", tileRuleThree)
+	coastRules := tileRulesMap[Coast]
+	if !sliceIncludes(coastRules.Down, Coast) || !sliceIncludes(coastRules.Down, Sea) {
+		t.Errorf("Coast rules for Down isn't Coast and Sea. Got %+v.", coastRules.Down)
 	}
-
-	tileRuleFour := tileRulesList[3]
-	if tileRuleFour.Type != "LAND" || tileRuleFour.Down != "COAST" || tileRuleFour.Up != "LAND" || tileRuleFour.Right != "COAST" || tileRuleFour.Left != "" {
-		t.Errorf("Tile rule 4 invalid %+v", tileRuleFour)
+	if !sliceIncludes(coastRules.Up, Coast) || !sliceIncludes(coastRules.Up, Land) {
+		t.Errorf("Coast rules for up isn't Coast and Land. Got %+v.", coastRules.Up)
 	}
-
-	tileRuleFive := tileRulesList[4]
-	if tileRuleFive.Type != "COAST" || tileRuleFive.Down != "SEA" || tileRuleFive.Up != "COAST" || tileRuleFive.Right != "SEA" || tileRuleFive.Left != "LAND" {
-		t.Errorf("Tile rule 5 invalid %+v", tileRuleFive)
+	if !sliceIncludes(coastRules.Right, Sea) {
+		t.Errorf("Coast rules for Right isn't Sea. Got %+v.", coastRules.Right)
 	}
-
-	tileRuleSix := tileRulesList[5]
-	if tileRuleSix.Type != "SEA" || tileRuleSix.Down != "LAND" || tileRuleSix.Up != "SEA" || tileRuleSix.Right != "" || tileRuleSix.Left != "COAST" {
-		t.Errorf("Tile rule 6 invalid %+v", tileRuleSix)
+	if !sliceIncludes(coastRules.Left, Land) {
+		t.Errorf("Coast rules for Left isn't Land. Got %+v.", coastRules.Left)
 	}
 }
 
