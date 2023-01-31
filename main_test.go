@@ -91,21 +91,24 @@ func WaveFunction(sampleInput [][]string) map[TileType]TileRulesList {
 			tileName := calculateTileName(tile)
 			newRule := newTileRules(sampleInput, tile, i, j)
 
-			if entry, ok := tileRulesMap[tileName]; ok {
-				if newRule.Up != None && !sliceIncludes(entry.Up, newRule.Up) {
-					entry.Up = append(entry.Down, newRule.Up)
-				}
-				if newRule.Down != None && !sliceIncludes(entry.Down, newRule.Down) {
-					entry.Down = append(entry.Down, newRule.Down)
-				}
-				if newRule.Left != None && !sliceIncludes(entry.Left, newRule.Left) {
-					entry.Left = append(entry.Left, newRule.Left)
-				}
-				if newRule.Right != None && !sliceIncludes(entry.Right, newRule.Right) {
-					entry.Right = append(entry.Right, newRule.Right)
-				}
-				tileRulesMap[tileName] = entry
+			entry, ok := tileRulesMap[tileName]
+			if !ok {
+				continue
 			}
+
+			if newRule.Up != None && !sliceIncludes(entry.Up, newRule.Up) {
+				entry.Up = append(entry.Down, newRule.Up)
+			}
+			if newRule.Down != None && !sliceIncludes(entry.Down, newRule.Down) {
+				entry.Down = append(entry.Down, newRule.Down)
+			}
+			if newRule.Left != None && !sliceIncludes(entry.Left, newRule.Left) {
+				entry.Left = append(entry.Left, newRule.Left)
+			}
+			if newRule.Right != None && !sliceIncludes(entry.Right, newRule.Right) {
+				entry.Right = append(entry.Right, newRule.Right)
+			}
+			tileRulesMap[tileName] = entry
 		}
 	}
 	return tileRulesMap
