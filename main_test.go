@@ -79,6 +79,18 @@ func sliceIncludes(slice []TileType, needle TileType) bool {
 	return false
 }
 
+func Equal(a, b []TileType) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func shouldAddRule(entries []TileType, newTile TileType) bool {
 	return newTile != None && !sliceIncludes(entries, newTile)
 }
@@ -176,7 +188,7 @@ type Square struct {
 	Type          *TileType
 }
 
-func collapse(ruleSet []TileRules, numberGenerator NumberGenerator, entropy Entropy) [3][3]Square {
+func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerator, entropy Entropy) [3][3]Square {
 	tileTypes := []TileType{Land, Sea, Coast}
 	grid := [3][3]Square{}
 
@@ -189,37 +201,39 @@ func collapse(ruleSet []TileRules, numberGenerator NumberGenerator, entropy Entr
 
 	totalCollapsed := 0
 	gridSize := len(grid) * len(grid[0])
-	for totalCollapsed < 2 {
+	for totalCollapsed < 1 {
 		tileNumber := entropy(numberGenerator, grid, totalCollapsed)
 		row, col := 0, 0
 		if tileNumber != 0 {
 			row = tileNumber / gridSize
-			col = (tileNumber % gridSize) - 1
+			col = tileNumber % gridSize
 		}
 
 		// decided the tile type
-		grid[row][col].Type = &grid[row][col].Possibilities[numberGenerator()]
+		collapsedTileType := &grid[row][col].Possibilities[numberGenerator()]
+		grid[row][col].Type = collapsedTileType
 		totalCollapsed++
 
-		// tile to the left
-		grid[row][col-1].Possibilities = []TileType{ruleSet[0].Left}
-		// tile to the right
+		collapsedTileRuleSet := ruleSet[*collapsedTileType]
+		grid[row][col-1].Possibilities = collapsedTileRuleSet.Left
+		// // tile to the right
 		if col != len(grid[0])-1 {
-			grid[row][col+1].Possibilities = []TileType{ruleSet[0].Right}
+			grid[row][col+1].Possibilities = collapsedTileRuleSet.Right
 		}
-		// tile above
-		if row != 0 {
-			grid[row-1][col].Possibilities = []TileType{ruleSet[0].Up}
-		}
-		// tile below
+		// // tile above
+		// if row != 0 {
+		// 	grid[row-1][col].Possibilities = []TileType{ruleSet[0].Up}
+		// }
+		// // tile below
 		if row != len(grid)-1 {
-			grid[row+1][col].Possibilities = []TileType{ruleSet[0].Down}
+			grid[row+1][col].Possibilities = collapsedTileRuleSet.Down
 		}
 	}
 
 	return grid
 }
 
+/*
 // Given a set of rules and an entropy function
 // When a square is collapsed
 // Collapses the next square given it has the lowest entropy
@@ -250,34 +264,69 @@ func TestWaveFunctionCollapseNextLowestEntropy(t *testing.T) {
 	if *nextTileType.Type != Sea {
 		t.Errorf("Next tile should be SEA but got %s", *nextTileType.Type)
 	}
-}
+} */
 
-func TestRemovesPossibilitiesGivenASetOfRules(t *testing.T) {
-	ruleOne := TileRules{Type: Land, Up: Land, Down: Sea, Right: Coast, Left: Sea}
-	ruleTwo := TileRules{Type: Sea, Up: Sea, Down: Sea, Right: Coast, Left: Coast}
-	ruleSet := []TileRules{ruleOne, ruleTwo}
+// Give a collapsed tile
+// the surrounding tiles have their possibilities removed
+// following the rules of the collapsed tile
+func TestRemovePossibilities(t *testing.T) {
 
-	// initial square, pick one at random because they are all the same entropy
 	numberGenerator := func() int {
-		return 0
+		return 2
 	}
 
 	entropy := func(ng NumberGenerator, grid [3][3]Square, totalCollapsed int) int {
 		if totalCollapsed == 0 {
-			return 3
+			return 1
 		}
 
+		return 0
+	}
+
+	sampleInput := [][]string{
+		{"L", "C", "S"},
+	}
+	ruleSet := WaveFunction(sampleInput)
+	grid := collapse(ruleSet, numberGenerator, entropy)
+	leftTile := grid[0][0]
+	middleTile := grid[0][1]
+	rightTile := grid[0][2]
+	if *middleTile.Type != Coast {
+		t.Errorf("Middle tile doesn't equal Coast, got %+v", *middleTile.Type)
+	}
+	if !Equal(leftTile.Possibilities, []TileType{Land}) {
+		t.Errorf("Left tile doesn't have the possibility of Land, got %+v", leftTile.Possibilities)
+	}
+	if !Equal(rightTile.Possibilities, []TileType{Sea}) {
+		t.Errorf("Right tile doesn't have the possibility of Sea, got %+v", rightTile.Possibilities)
+	}
+}
+
+func TestRemovePossibilitiesMultipleRows(t *testing.T) {
+	numberGenerator := func() int {
 		return 2
 	}
 
-	result := collapse(ruleSet, numberGenerator, entropy)
-	if *result[0][2].Type != Land {
-		t.Errorf("Square did not collapse into LAND but %s instead", *result[0][2].Type)
+	entropy := func(ng NumberGenerator, grid [3][3]Square, totalCollapsed int) int {
+		if totalCollapsed == 0 {
+			return 1
+		}
+
+		return 0
 	}
 
-	// the next square that should be picked based on the lowest entropy
-	nextTileType := result[0][1]
-	if *nextTileType.Type != Sea {
-		t.Errorf("Next tile should be SEA but got %s", *nextTileType.Type)
+	sampleInput := [][]string{
+		{"L", "C", "S"},
+		{"C", "L", "C"},
+	}
+	ruleSet := WaveFunction(sampleInput)
+	grid := collapse(ruleSet, numberGenerator, entropy)
+	middleTile := grid[0][1]
+	downTile := grid[1][1]
+	if *middleTile.Type != Coast {
+		t.Errorf("Middle tile doesn't equal Coast, got %+v", *middleTile.Type)
+	}
+	if !Equal(downTile.Possibilities, []TileType{Land}) {
+		t.Errorf("Down tile doesn't have the possibility of Land, got %+v", downTile.Possibilities)
 	}
 }
