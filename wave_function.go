@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -40,7 +39,7 @@ type Square struct {
 	Type          *TileType
 }
 
-func WaveFunction(sampleInput [][]string, gridArea int) {
+func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 	entropy := func(grid [][]Square, totalCollapsed int) int {
 		return totalCollapsed
 	}
@@ -53,8 +52,7 @@ func WaveFunction(sampleInput [][]string, gridArea int) {
 	}
 
 	ruleSet := generateRuleSet(sampleInput)
-	grid := collapse(ruleSet, numberGenerator, entropy, gridArea)
-	fmt.Printf("+%v\n", grid)
+	return collapse(ruleSet, numberGenerator, entropy, gridArea)
 }
 
 func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerator, entropy Entropy, gridArea int) [][]Square {
@@ -70,9 +68,6 @@ func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerato
 			row[x] = Square{Possibilities: tileTypes}
 		}
 		grid = append(grid, row)
-		// for j := 0; j < len(row); j++ {
-		// 	grid[i][j] = Square{Possibilities: tileTypes}
-		// }
 	}
 
 	totalCollapsed := 0
@@ -90,7 +85,7 @@ func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerato
 		}
 
 		// decided the tile type
-		collapsedTileType := &grid[row][col].Possibilities[numberGenerator(len(grid[row][col].Possibilities)-1)]
+		collapsedTileType := &grid[row][col].Possibilities[numberGenerator(len(grid[row][col].Possibilities))]
 		grid[row][col].Type = collapsedTileType
 		totalCollapsed++
 
