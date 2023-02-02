@@ -58,7 +58,7 @@ func TestGenerateRulesFromSampleInput(t *testing.T) {
 }
 
 func TestCollapsesAllSquaresInAGrid(t *testing.T) {
-	numberGenerator := func() int {
+	numberGenerator := func(n int) int {
 		return 0
 	}
 
