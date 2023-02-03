@@ -1,2 +1,4 @@
+github.com/DrSmithFr/go-console v0.0.0-20221206120830-097bd4613151 h1:/Oly1n+RZ4r4/QC8XpuVRBwAxJBmrcl8YrmozxLVTdU=
+github.com/DrSmithFr/go-console v0.0.0-20221206120830-097bd4613151/go.mod h1:i0k73RL6EtTDu5aa5HCm6P9zJieKYlwNUlqOr5b9eCw=
 golang.org/x/exp v0.0.0-20230131160201-f062dba9d201 h1:BEABXpNXLEz0WxtA+6CQIz2xkg80e+1zrhWyMcq8VzE=
 golang.org/x/exp v0.0.0-20230131160201-f062dba9d201/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
