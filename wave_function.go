@@ -56,7 +56,7 @@ func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 	return collapse(ruleSet, numberGenerator, entropy, gridArea)
 }
 
-func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerator, entropy Entropy, gridArea int) [][]Square {
+func collapse(ruleSet RuleSet, numberGenerator NumberGenerator, entropy Entropy, gridArea int) [][]Square {
 	tileTypes := []TileType{Coast, Land, Sea}
 
 	// fill all squares with possibilities
@@ -133,8 +133,8 @@ func shouldAddRule(entries []TileType, newTile TileType) bool {
 	return newTile != None && slices.Index(entries, newTile) == -1
 }
 
-func generateRuleSet(sampleInput [][]string) map[TileType]TileRulesList {
-	tileRulesMap := make(map[TileType]TileRulesList)
+func generateRuleSet(sampleInput [][]string) RuleSet {
+	tileRulesMap := make(RuleSet)
 	defaultTileRule := TileRulesList{Up: []TileType{}, Down: []TileType{}, Left: []TileType{}, Right: []TileType{}}
 	tileRulesMap[Land] = defaultTileRule
 	tileRulesMap[Sea] = defaultTileRule
