@@ -94,6 +94,11 @@ func collapse(ruleSet RuleSet, numberGenerator NumberGenerator, entropy Entropy,
 		row := squareCoords[0]
 		col := squareCoords[1]
 
+		if totalCollapsed == 0 && row == 0 && col == 0 {
+			row = numberGenerator(gridWidth)
+			col = numberGenerator(gridWidth)
+		}
+
 		// Is there a contradiction?
 		if len(grid[row][col].Possibilities) < 1 {
 			return collapse(ruleSet, numberGenerator, entropy, gridArea, weights)

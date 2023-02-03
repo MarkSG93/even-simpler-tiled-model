@@ -8,14 +8,18 @@ import (
 
 func main() {
 	sampleInput := [][]string{
-		{"L", "C", "L", "L"},
-		{"C", "S", "C", "L"},
-		{"L", "L", "C", "S"},
-		{"C", "S", "S", "C"},
+		{"L", "L", "L"},
+		{"L", "L", "C"},
+		{"L", "C", "S"},
+		{"C", "S", "S"},
+		{"S", "S", "S"},
+		{"S", "S", "C"},
+		{"C", "C", "L"},
+		{"L", "L", "L"},
 	}
 
 	out := output.NewConsoleOutput(true, nil)
-	grid := WaveFunction(sampleInput, 144)
+	grid := WaveFunction(sampleInput, 1024)
 	totalsOfTileTypes := make(map[TileType]int)
 	for _, row := range grid {
 		for _, col := range row {
