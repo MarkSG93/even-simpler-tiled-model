@@ -216,6 +216,7 @@ func getMatchingItems(a []TileType, b []TileType) []TileType {
 		Coast: 0,
 	}
 
+	matchingItems := []TileType{}
 	for tileType := range hits {
 		if slices.Index(a, tileType) != -1 {
 			hits[tileType] += 1
@@ -224,14 +225,12 @@ func getMatchingItems(a []TileType, b []TileType) []TileType {
 		if slices.Index(b, tileType) != -1 {
 			hits[tileType] += 1
 		}
-	}
 
-	matchingItems := []TileType{}
-	for tileType, hits := range hits {
-		if hits > 1 {
+		if hits[tileType] > 1 {
 			matchingItems = append(matchingItems, tileType)
 		}
 	}
+
 	sort.Strings(matchingItems)
 	return matchingItems
 }
