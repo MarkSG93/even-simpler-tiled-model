@@ -201,10 +201,12 @@ func newTileRules(sampleInput [][]string, tile string, i int, j int) TileRules {
 	if j+1 >= len(row) { // on the right most tile
 		tileRules.Right = ""
 		tileRules.Left = calculateTileName(row[j-1])
-	} else { // middle tiles
-		tileRules.Left = calculateTileName(row[j-1])
-		tileRules.Right = calculateTileName(row[j+1])
+		return tileRules
 	}
+
+	// middle tiles
+	tileRules.Left = calculateTileName(row[j-1])
+	tileRules.Right = calculateTileName(row[j+1])
 
 	return tileRules
 }
