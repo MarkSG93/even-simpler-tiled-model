@@ -57,18 +57,10 @@ func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 
 func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerator, entropy Entropy, gridArea int) [][]Square {
 	tileTypes := []TileType{Coast, Land, Sea}
-	grid := [][]Square{}
 
 	// fill all squares with possibilities
 	gridWidth := int(math.Sqrt(float64(gridArea)))
-	for i := 0; i < gridWidth; i++ {
-		rowLength := int(math.Sqrt(float64(gridArea)))
-		row := make([]Square, rowLength)
-		for x := 0; x < rowLength; x++ {
-			row[x] = Square{Possibilities: tileTypes}
-		}
-		grid = append(grid, row)
-	}
+	grid := newGrid(gridWidth, tileTypes)
 
 	totalCollapsed := 0
 	for totalCollapsed < gridArea {
@@ -106,6 +98,19 @@ func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerato
 		if row != len(grid)-1 {
 			grid[row+1][col].Possibilities = getMatchingItems(collapsedTileRuleSet.Down, grid[row+1][col].Possibilities)
 		}
+	}
+
+	return grid
+}
+
+func newGrid(gridWidth int, tileTypes []TileType) [][]Square {
+	grid := [][]Square{}
+	for i := 0; i < gridWidth; i++ {
+		row := make([]Square, gridWidth)
+		for x := 0; x < gridWidth; x++ {
+			row[x] = Square{Possibilities: tileTypes}
+		}
+		grid = append(grid, row)
 	}
 
 	return grid
@@ -198,7 +203,7 @@ func getMatchingItems(a []TileType, b []TileType) []TileType {
 		Coast: 0,
 	}
 
-	for tileType, _ := range hits {
+	for tileType := range hits {
 		if slices.Index(a, tileType) != -1 {
 			hits[tileType] += 1
 		}
