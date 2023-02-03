@@ -197,12 +197,15 @@ func getMatchingItems(a []TileType, b []TileType) []TileType {
 		Sea:   0,
 		Coast: 0,
 	}
-	for _, item := range a {
-		hits[item] += 1
-	}
 
-	for _, item := range b {
-		hits[item] += 1
+	for tileType, _ := range hits {
+		if slices.Index(a, tileType) != -1 {
+			hits[tileType] += 1
+		}
+
+		if slices.Index(b, tileType) != -1 {
+			hits[tileType] += 1
+		}
 	}
 
 	matchingItems := []TileType{}
