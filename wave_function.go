@@ -38,6 +38,7 @@ type Square struct {
 	Possibilities []TileType
 	Type          *TileType
 }
+type RuleSet = map[TileType]TileRulesList
 
 func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 	entropy := func(grid [][]Square, totalCollapsed int) int {
@@ -65,11 +66,7 @@ func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerato
 	totalCollapsed := 0
 	for totalCollapsed < gridArea {
 		tileNumber := entropy(grid, totalCollapsed)
-		row, col := 0, 0
-		if tileNumber != 0 {
-			row = int(math.Floor(float64(tileNumber) / float64(len(grid))))
-			col = tileNumber % len(grid)
-		}
+		row, col := calculateRowAndColumn(tileNumber, gridWidth)
 
 		// Is there a contradiction?
 		if len(grid[row][col].Possibilities) < 1 {
@@ -82,22 +79,7 @@ func collapse(ruleSet map[TileType]TileRulesList, numberGenerator NumberGenerato
 		totalCollapsed++
 
 		collapsedTileRuleSet := ruleSet[*collapsedTileType]
-		// tile to the left
-		if col-1 >= 0 {
-			grid[row][col-1].Possibilities = getMatchingItems(collapsedTileRuleSet.Left, grid[row][col-1].Possibilities)
-		}
-		// tile to the right
-		if col != len(grid[0])-1 {
-			grid[row][col+1].Possibilities = getMatchingItems(collapsedTileRuleSet.Right, grid[row][col+1].Possibilities)
-		}
-		// tile above
-		if row != 0 {
-			grid[row-1][col].Possibilities = getMatchingItems(collapsedTileRuleSet.Up, grid[row-1][col].Possibilities)
-		}
-		// tile below
-		if row != len(grid)-1 {
-			grid[row+1][col].Possibilities = getMatchingItems(collapsedTileRuleSet.Down, grid[row+1][col].Possibilities)
-		}
+		grid = updateGridPossibilities(grid, row, col, collapsedTileRuleSet)
 	}
 
 	return grid
@@ -111,6 +93,37 @@ func newGrid(gridWidth int, tileTypes []TileType) [][]Square {
 			row[x] = Square{Possibilities: tileTypes}
 		}
 		grid = append(grid, row)
+	}
+
+	return grid
+}
+
+func calculateRowAndColumn(index int, gridWidth int) (row, col int) {
+	row, col = 0, 0
+	if index != 0 {
+		row = int(math.Floor(float64(index) / float64(gridWidth)))
+		col = index % gridWidth
+	}
+
+	return row, col
+}
+
+func updateGridPossibilities(grid [][]Square, row int, col int, collapsedTileRuleSet TileRulesList) [][]Square {
+	// left most tile
+	if col-1 >= 0 {
+		grid[row][col-1].Possibilities = getMatchingItems(collapsedTileRuleSet.Left, grid[row][col-1].Possibilities)
+	}
+	// tile to the right
+	if col != len(grid[0])-1 {
+		grid[row][col+1].Possibilities = getMatchingItems(collapsedTileRuleSet.Right, grid[row][col+1].Possibilities)
+	}
+	// tile above
+	if row != 0 {
+		grid[row-1][col].Possibilities = getMatchingItems(collapsedTileRuleSet.Up, grid[row-1][col].Possibilities)
+	}
+	// tile below
+	if row != len(grid)-1 {
+		grid[row+1][col].Possibilities = getMatchingItems(collapsedTileRuleSet.Down, grid[row+1][col].Possibilities)
 	}
 
 	return grid
