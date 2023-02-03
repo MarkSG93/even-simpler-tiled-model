@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"testing"
 
 	"golang.org/x/exp/slices"
@@ -119,4 +120,64 @@ func TestGetMatchingItemsInSlices(t *testing.T) {
 	if !slices.Equal(matchingItems, []TileType{Coast, Land}) {
 		t.Errorf("Ur shit whack bro %+v", matchingItems)
 	}
+}
+
+func shannonsEntropy(possibilities []TileType, weights map[TileType]int) float64 {
+	sumOfWeights := 0.0
+	sumOfWeightLogWeights := 0.0
+
+	for _, possibility := range possibilities {
+		tileWeight := float64(weights[possibility])
+		sumOfWeights += float64(tileWeight)
+		sumOfWeightLogWeights += tileWeight * math.Log(float64(tileWeight))
+	}
+
+	return math.Log(sumOfWeights) - (sumOfWeightLogWeights / sumOfWeights)
+}
+
+// Given a set of possibilities
+// and a set of tile weights
+// it calculates the entropy for the possibilities
+func TestEntropy(t *testing.T) {
+	weights := map[TileType]int{
+		Land:  2,
+		Sea:   1,
+		Coast: 1,
+	}
+
+	entropy := shannonsEntropy([]TileType{Land, Sea, Coast}, weights)
+	if entropy != 1.0397207708399179 {
+		t.Errorf("Expected tile to collapse to be 1 got %+g\n", entropy)
+	}
+}
+
+// Given a sample input
+// it calculates the weights for each type
+func TestCalculateWeights(t *testing.T) {
+	sampleInput := [][]string{
+		{"L", "L", "L", "L"},
+		{"S", "S", "S", "C"},
+	}
+	weights := calculateWeights(sampleInput)
+	if weights[Land] != 4 {
+		t.Errorf("Expected weight for Land to be 4, got %+d", weights[Land])
+	}
+	if weights[Sea] != 3 {
+		t.Errorf("Expected weight for Sea to be 3, got %+d", weights[Sea])
+	}
+	if weights[Coast] != 1 {
+		t.Errorf("Expected weight for Coast to be 1, got %+d", weights[Coast])
+	}
+}
+
+func calculateWeights(sampleInput [][]string) map[TileType]int {
+	weights := make(map[TileType]int)
+	for _, row := range sampleInput {
+		for _, col := range row {
+			tileType := calculateTileName(col)
+			weights[tileType]++
+		}
+	}
+
+	return weights
 }
