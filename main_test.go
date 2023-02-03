@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"testing"
 
 	"golang.org/x/exp/slices"
@@ -63,9 +62,9 @@ func TestCollapsesAllSquaresInAGrid(t *testing.T) {
 		return 0
 	}
 
-	entropy := func(grid [][]Square, totalCollapsed int) int {
-		return totalCollapsed
-	}
+	// entropy := func(possibilities []TileType, weights TileWeights) int {
+	// 	return totalCollapsed
+	// }
 
 	sampleInput := [][]string{
 		{"L", "C", "S"},
@@ -73,7 +72,12 @@ func TestCollapsesAllSquaresInAGrid(t *testing.T) {
 		{"S", "C", "L"},
 	}
 	ruleSet := generateRuleSet(sampleInput)
-	grid := collapse(ruleSet, numberGenerator, entropy, 9)
+	weights := TileWeights{
+		Land:  3,
+		Coast: 3,
+		Sea:   3,
+	}
+	grid := collapse(ruleSet, numberGenerator, shannonsEntropy, 9, weights)
 	firstTile := grid[0][0]
 	secondTile := grid[0][1]
 	thirdTile := grid[0][2]
@@ -122,19 +126,6 @@ func TestGetMatchingItemsInSlices(t *testing.T) {
 	}
 }
 
-func shannonsEntropy(possibilities []TileType, weights map[TileType]int) float64 {
-	sumOfWeights := 0.0
-	sumOfWeightLogWeights := 0.0
-
-	for _, possibility := range possibilities {
-		tileWeight := float64(weights[possibility])
-		sumOfWeights += float64(tileWeight)
-		sumOfWeightLogWeights += tileWeight * math.Log(float64(tileWeight))
-	}
-
-	return math.Log(sumOfWeights) - (sumOfWeightLogWeights / sumOfWeights)
-}
-
 // Given a set of possibilities
 // and a set of tile weights
 // it calculates the entropy for the possibilities
@@ -168,16 +159,4 @@ func TestCalculateWeights(t *testing.T) {
 	if weights[Coast] != 1 {
 		t.Errorf("Expected weight for Coast to be 1, got %+d", weights[Coast])
 	}
-}
-
-func calculateWeights(sampleInput [][]string) map[TileType]int {
-	weights := make(map[TileType]int)
-	for _, row := range sampleInput {
-		for _, col := range row {
-			tileType := calculateTileName(col)
-			weights[tileType]++
-		}
-	}
-
-	return weights
 }

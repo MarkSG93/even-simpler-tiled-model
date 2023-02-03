@@ -33,18 +33,15 @@ type TileRulesList struct {
 }
 
 type NumberGenerator func(n int) int
-type Entropy func(grid [][]Square, totalCollapsed int) int
+type Entropy func(possibilities []TileType, weights map[TileType]int) float64
 type Square struct {
 	Possibilities []TileType
 	Type          *TileType
 }
 type RuleSet = map[TileType]TileRulesList
+type TileWeights = map[TileType]int
 
 func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
-	entropy := func(grid [][]Square, totalCollapsed int) int {
-		return totalCollapsed
-	}
-
 	numberGenerator := func(n int) int {
 		if n == 0 {
 			return n
@@ -53,10 +50,38 @@ func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 	}
 
 	ruleSet := generateRuleSet(sampleInput)
-	return collapse(ruleSet, numberGenerator, entropy, gridArea)
+	weights := calculateWeights(sampleInput)
+	return collapse(ruleSet, numberGenerator, shannonsEntropy, gridArea, weights)
 }
 
-func collapse(ruleSet RuleSet, numberGenerator NumberGenerator, entropy Entropy, gridArea int) [][]Square {
+func findLowestEntropy(grid [][]Square, weights map[TileType]int) [2]int {
+	lowestEntropySquare := [2]int{0, 0}
+	lowestEntropy := -1.0
+	for x, row := range grid {
+		for y, col := range row {
+			if col.Type != nil {
+				continue
+			}
+			squareEntropy := shannonsEntropy(col.Possibilities, weights)
+			if lowestEntropy < 0 {
+				lowestEntropy = squareEntropy
+				lowestEntropySquare[0] = x
+				lowestEntropySquare[1] = y
+				continue
+			}
+
+			if squareEntropy < lowestEntropy {
+				lowestEntropy = squareEntropy
+				lowestEntropySquare[0] = x
+				lowestEntropySquare[1] = y
+			}
+		}
+	}
+
+	return lowestEntropySquare
+}
+
+func collapse(ruleSet RuleSet, numberGenerator NumberGenerator, entropy Entropy, gridArea int, weights TileWeights) [][]Square {
 	tileTypes := []TileType{Coast, Land, Sea}
 
 	// fill all squares with possibilities
@@ -65,12 +90,13 @@ func collapse(ruleSet RuleSet, numberGenerator NumberGenerator, entropy Entropy,
 
 	totalCollapsed := 0
 	for totalCollapsed < gridArea {
-		tileNumber := entropy(grid, totalCollapsed)
-		row, col := calculateRowAndColumn(tileNumber, gridWidth)
+		squareCoords := findLowestEntropy(grid, weights)
+		row := squareCoords[0]
+		col := squareCoords[1]
 
 		// Is there a contradiction?
 		if len(grid[row][col].Possibilities) < 1 {
-			return collapse(ruleSet, numberGenerator, entropy, gridArea)
+			return collapse(ruleSet, numberGenerator, entropy, gridArea, weights)
 		}
 
 		// decided the tile type
@@ -235,4 +261,29 @@ func getMatchingItems(a []TileType, b []TileType) []TileType {
 
 	sort.Strings(matchingItems)
 	return matchingItems
+}
+
+func calculateWeights(sampleInput [][]string) map[TileType]int {
+	weights := make(map[TileType]int)
+	for _, row := range sampleInput {
+		for _, col := range row {
+			tileType := calculateTileName(col)
+			weights[tileType]++
+		}
+	}
+
+	return weights
+}
+
+func shannonsEntropy(possibilities []TileType, weights map[TileType]int) float64 {
+	sumOfWeights := 0.0
+	sumOfWeightLogWeights := 0.0
+
+	for _, possibility := range possibilities {
+		tileWeight := float64(weights[possibility])
+		sumOfWeights += float64(tileWeight)
+		sumOfWeightLogWeights += tileWeight * math.Log(float64(tileWeight))
+	}
+
+	return math.Log(sumOfWeights) - (sumOfWeightLogWeights / sumOfWeights)
 }
