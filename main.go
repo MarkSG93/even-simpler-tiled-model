@@ -12,10 +12,6 @@ func main() {
 		{"L", "L", "C"},
 		{"L", "C", "S"},
 		{"C", "S", "S"},
-		{"S", "S", "S"},
-		{"S", "S", "C"},
-		{"C", "C", "L"},
-		{"L", "L", "L"},
 	}
 
 	out := output.NewConsoleOutput(true, nil)

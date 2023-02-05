@@ -54,7 +54,7 @@ func WaveFunction(sampleInput [][]string, gridArea int) [][]Square {
 	return collapse(ruleSet, numberGenerator, shannonsEntropy, gridArea, weights)
 }
 
-func findLowestEntropy(grid [][]Square, weights map[TileType]int) [2]int {
+func findLowestEntropy(grid [][]Square, weights TileWeights) [2]int {
 	lowestEntropySquare := [2]int{0, 0}
 	lowestEntropy := -1.0
 	for x, row := range grid {
